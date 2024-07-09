@@ -376,7 +376,6 @@ export interface ApiSessionSession extends Schema.CollectionType {
   attributes: {
     isActive: Attribute.Boolean & Attribute.DefaultTo<true>;
     username: Attribute.String & Attribute.Required;
-    messages: Attribute.JSON & Attribute.Required;
     sessionId: Attribute.String & Attribute.Required & Attribute.Unique;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;

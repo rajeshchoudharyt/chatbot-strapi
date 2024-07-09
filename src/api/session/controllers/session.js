@@ -15,7 +15,6 @@ module.exports = createCoreController("api::session.session", ({ strapi }) => ({
         data: {
           username: ctx.state.user.username,
           sessionId: uuidv4(),
-          messages: [],
         },
       };
 

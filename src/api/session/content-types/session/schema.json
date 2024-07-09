@@ -20,10 +20,6 @@
       "type": "string",
       "required": true
     },
-    "messages": {
-      "type": "json",
-      "required": true
-    },
     "sessionId": {
       "type": "string",
       "required": true,
