@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sessions",
+  "info": {
+    "singularName": "session",
+    "pluralName": "sessions",
+    "displayName": "Session",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "username": {
+      "type": "string",
+      "required": true
+    },
+    "messages": {
+      "type": "json",
+      "required": true
+    },
+    "sessionId": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    }
+  }
+}
