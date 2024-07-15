@@ -30,7 +30,7 @@ async function onMessage(message, callback, socketId, strapi) {
 
     if (!message)
       return callback({
-        status: { code: 400, ok: false },
+        ok: false,
         name: "Bad Request",
         messages: ["Invalid message."],
       });
@@ -44,7 +44,7 @@ async function onMessage(message, callback, socketId, strapi) {
     const serverResponse = await createEntryToDatabase(data, "server", strapi);
 
     callback({
-      status: { code: 200, ok: true },
+      ok: true,
       data: [userResponse, serverResponse],
     });
   } catch (err) {
@@ -54,10 +54,15 @@ async function onMessage(message, callback, socketId, strapi) {
 
 async function createEntryToDatabase(data, role, strapi) {
   data = { data: { ...data, role } };
-  return await strapi.entityService.create(
+  data = await strapi.entityService.create(
     "api::conversation.conversation",
     data
   );
+
+  const id = data.id;
+  delete data.id;
+
+  return { id, attributes: data };
 }
 
 module.exports = { authenticateUser, onMessage };

@@ -11,10 +11,13 @@ module.exports = createCoreController("api::session.session", ({ strapi }) => ({
   // To create a new session
   async create(ctx) {
     try {
+      const { sessionName: name } = ctx.request.body;
+
       ctx.request.body = {
         data: {
           username: ctx.state.user.username,
           sessionId: uuidv4(),
+          name,
         },
       };
 
@@ -29,11 +32,8 @@ module.exports = createCoreController("api::session.session", ({ strapi }) => ({
   // To retrieve all sessions by user
   async find(ctx) {
     try {
-      console.log("query before", ctx.query);
-
       ctx.query = { filters: { username: ctx.state.user.username } };
 
-      console.log("query after", ctx.query);
       const result = await super.find(ctx);
       return result;
       //

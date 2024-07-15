@@ -2,20 +2,24 @@ const { authenticateUser, onMessage } = require("./message");
 
 function createSocket(strapi) {
   strapi.users = [];
-  const LIMIT = 25;
+  const LIMIT = 50;
 
   let io = startServer();
   middleware(strapi, io, LIMIT);
   connection(strapi, io);
 
   strapi.io = io;
+
+  setInterval(() => {
+    strapi.users = [];
+  }, 1000 * 60 * 60 * 24 * 2);
 }
 
 function startServer() {
   // @ts-ignore
   const io = require("socket.io")(strapi.server.httpServer, {
     cors: {
-      origin: "http://localhost:1337",
+      origin: process.env.FRONTEND_URL,
       methods: ["GET", "POST"],
       credientials: true,
     },
@@ -26,9 +30,9 @@ function startServer() {
 function connection(strapi, io) {
   io.on("connection", function (socket) {
     // To handle client messages
-    socket.on("message", async ({ message }, callback) =>
-      onMessage(message, callback, socket.id, strapi)
-    );
+    socket.on("message", async (message, callback) => {
+      onMessage(message, callback, socket.id, strapi);
+    });
     socket.on("disconnect", () => {
       // To handle user on disconnect
       strapi.users = strapi.users.filter(
@@ -37,7 +41,7 @@ function connection(strapi, io) {
     });
 
     /*
-        Sync data regularly on abnormal disconnect,
+        Sync data regularly on abnormal disconnect for
         in-memory users(strapi.users) and client users(io.fetchSockets())
     */
   });

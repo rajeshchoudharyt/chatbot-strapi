@@ -410,6 +410,7 @@ export interface ApiSessionSession extends Schema.CollectionType {
     isActive: Attribute.Boolean & Attribute.DefaultTo<true>;
     username: Attribute.String & Attribute.Required;
     sessionId: Attribute.String & Attribute.Required & Attribute.Unique;
+    name: Attribute.String & Attribute.Required;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
