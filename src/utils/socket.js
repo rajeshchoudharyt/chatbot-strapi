@@ -1,6 +1,7 @@
-const { authenticateUser, onMessage } = require("./message");
+const { onMessage } = require("./message");
 
 function createSocket(strapi) {
+  strapi.sessions = {};
   strapi.users = [];
   const LIMIT = 50;
 
@@ -30,20 +31,15 @@ function startServer() {
 function connection(strapi, io) {
   io.on("connection", function (socket) {
     // To handle client messages
-    socket.on("message", async (message, callback) => {
-      onMessage(message, callback, socket.id, strapi);
+    socket.on("message", async (data, callback) => {
+      onMessage(data, callback, socket.id, strapi);
     });
+
     socket.on("disconnect", () => {
-      // To handle user on disconnect
       strapi.users = strapi.users.filter(
         (socketUser) => socketUser.socketId != socket.id
       );
     });
-
-    /*
-        Sync data regularly on abnormal disconnect for
-        in-memory users(strapi.users) and client users(io.fetchSockets())
-    */
   });
 }
 
@@ -51,16 +47,13 @@ function connection(strapi, io) {
 function middleware(strapi, io, LIMIT) {
   io.use(async (socket, next) => {
     try {
-      const user = await authenticateUser(strapi, socket);
+      const username = await authenticateUser(strapi, socket);
 
       if (strapi.users.length <= LIMIT) {
-        const found = strapi.users.some(
-          (socketUser) => socketUser.sessionId === user.sessionId
-        );
-
+        const found = strapi.users.some((user) => user.username === username);
         if (found) throw new Error("Same session is currently active.");
-        strapi.users.push({ ...user, socketId: socket.id });
 
+        strapi.users.push({ username, socketId: socket.id });
         next();
         //
       } else throw new Error("Rate limit exceeded.");
@@ -69,6 +62,20 @@ function middleware(strapi, io, LIMIT) {
       next(err);
     }
   });
+}
+
+async function authenticateUser(strapi, socket) {
+  let user = await strapi.plugins["users-permissions"].services.jwt.verify(
+    socket.handshake.auth.token
+  );
+
+  user = await strapi.entityService.findOne(
+    "plugin::users-permissions.user",
+    user.id
+  );
+
+  if (user) return user.username;
+  throw new Error("Invalid: User not found.");
 }
 
 module.exports = { createSocket };

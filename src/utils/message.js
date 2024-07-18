@@ -1,45 +1,12 @@
-async function authenticateUser(strapi, socket) {
-  let user = await strapi.plugins["users-permissions"].services.jwt.verify(
-    socket.handshake.auth.token
-  );
-
-  user = await strapi.entityService.findOne(
-    "plugin::users-permissions.user",
-    user.id
-  );
-
-  const count = await strapi.entityService.count("api::session.session", {
-    filters: {
-      sessionId: socket.handshake.query.sessionId,
-      isActive: true,
-    },
-  });
-
-  if (count)
-    return {
-      username: user.username,
-      sessionId: socket.handshake.query.sessionId,
-    };
-
-  throw new Error("Invalid session.");
-}
-
-async function onMessage(message, callback, socketId, strapi) {
+async function onMessage(data, callback, socketId, strapi) {
   try {
-    message = message ? message.toString() : "";
+    if (!data) throw new Error();
 
-    if (!message)
-      return callback({
-        ok: false,
-        name: "Bad Request",
-        messages: ["Invalid message."],
-      });
-
-    const { username, sessionId } = strapi.users.filter(
+    const { username } = strapi.users.filter(
       (user) => user.socketId === socketId
     )[0];
 
-    const data = { username, sessionId, message };
+    data = { ...data, username };
     const userResponse = await createEntryToDatabase(data, "user", strapi);
     const serverResponse = await createEntryToDatabase(data, "server", strapi);
 
@@ -47,8 +14,13 @@ async function onMessage(message, callback, socketId, strapi) {
       ok: true,
       data: [userResponse, serverResponse],
     });
+    //
   } catch (err) {
-    console.log(err);
+    callback({
+      ok: false,
+      name: "Bad Request",
+      messages: ["Invalid message."],
+    });
   }
 }
 
@@ -65,4 +37,4 @@ async function createEntryToDatabase(data, role, strapi) {
   return { id, attributes: data };
 }
 
-module.exports = { authenticateUser, onMessage };
+module.exports = { onMessage };
